@@ -50,6 +50,14 @@ problem (Of course you can also ask for help!).
 There will be a class on writing these tests roughly mid-course, so
 things will get considerably less cryptic over time.
 
+To run a single test, say "Ex10.01" use filtering (drop `-w` if you do not need
+watching):
+```
+scala-cli test . -w -- -f Ex18
+```
+Any substring from the test name can be used with `-f`.
+
+
 # Other files
 
 `Factorial.scala` shows a loop implementation (imperative) and two
