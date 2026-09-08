@@ -435,4 +435,4 @@ object ExercisesSpec
   property("Ex18.05: A consecutive subsequence (negative test)") =
     val l = List(1, 2, 1, 1, 3)
     val s = List(1, 2, 3)
-    !hasSubsequence(l, s) :| "1,2,1,2,3 has subsequence 1,2,3"
+    !hasSubsequence(l, s) :| "1,2,1,1,3 has subsequence 1,2,3"
