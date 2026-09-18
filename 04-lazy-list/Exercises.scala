@@ -141,16 +141,21 @@ enum LazyList[+A]:
    * getOrElse last week, and the type of foldRight this week.
    */
   def append[B >: A](that: => LazyList[B]): LazyList[B] =
-    ???
+    foldRight[LazyList[B], LazyList[B]] (that)
+      ((element, acc) => Cons(() => element, () => acc))
 
   // Note: The type is incorrect, you need to fix it
-  def flatMap(f: Any): LazyList[Any] =
-    ???
+  def flatMap[B >: A](f: A => LazyList[B]): LazyList[B] =
+    foldRight[LazyList[A], LazyList[B]] (Empty)
+      ((element, acc) => f(element).append(acc))
 
   // Exercise 9
   // Type answer here
   //
-  // ...
+  // Because filter only produces the elements of the lazy list
+  // as they are needed for consumption.
+  // HeadOption only consumes the first element of the lazy list
+  // if it exists, and so filter will never consumer more elements.
   //
   // Scroll down to Exercise 10 in the companion object below
 
@@ -191,10 +196,10 @@ object LazyList:
   // Exercise 1
 
   def from(n: Int): LazyList[Int] =
-    Cons(() => n, () => from(n + 1))
+    cons(n, from(n + 1))
 
   def to(n: Int): LazyList[Int] =
-    Cons(() => n, () => to(n - 1))
+    cons(n, to(n - 1))
 
   lazy val naturals: LazyList[Int] =
     from(1)
@@ -204,18 +209,26 @@ object LazyList:
   // Exercise 10
 
   // Note: The type is incorrect, you need to fix it
-  lazy val fibs: Any =
-    ???
+  lazy val fibs: LazyList[Int] = ???
+//    fibs.foldRight[LazyList[Int], LazyList[Int]]
+//      (cons(1, cons(0, empty))) ((i, acc) => cons(acc.headOption.getOrElse(0) + i, acc))
+
 
   // Exercise 11
 
   def unfold[A, S](z: S)(f: S => Option[(A, S)]): LazyList[A] =
-    ???
+    f(z).map((a, s) => cons(a, unfold1(s)(f))).getOrElse(empty)
+
+  def unfold1[A, S](z: S)(f: S => Option[(A, S)]): LazyList[A] =
+    f(z) match
+      case Some((a, s)) => cons(a, unfold(s)(f))
+      case None => empty
 
   // Exercise 12
 
   // Note: The type is incorrect, you need to fix it
-  lazy val fibsUnfold: Any = ???
+  lazy val fibsUnfold: LazyList[Int] = ???
+//    unfold (cons(1, cons(0, empty))) ((current, previous) => )
 
   // Scroll up for Exercise 13 to the enum
 
