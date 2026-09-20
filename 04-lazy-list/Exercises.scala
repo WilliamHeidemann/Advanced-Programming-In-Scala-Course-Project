@@ -109,7 +109,7 @@ enum LazyList[+A]:
 
   def takeWhile1(p: A => Boolean): LazyList[A] =
     foldRight[LazyList[A], LazyList[A]](Empty)
-      ((element, acc) => if p(element) then Cons(() => element, () => acc) else Empty)
+      ((element, acc) => if p(element) then cons(element, acc) else Empty)
 
   // Exercise 7
 
@@ -119,14 +119,14 @@ enum LazyList[+A]:
   // Exercise 8
 
   // Note: The type is incorrect, you need to fix it
-  def map[Int >: A](f: A => Int): LazyList[Int] =
-    foldRight[LazyList[A], LazyList[Int]](Empty)
-      ((element, acc) => Cons(() => f(element), () => acc))
+  def map[B](f: A => B): LazyList[B] =
+    foldRight[LazyList[B], LazyList[B]](Empty)
+      ((element, acc) => cons(f(element), acc))
 
   // Note: The type is incorrect, you need to fix it
   def filter(p: A => Boolean): LazyList[A] =
     foldRight[LazyList[A], LazyList[A]](Empty)
-      ((element, acc) => if p(element) then Cons(() => element, () => acc) else acc)
+      ((element, acc) => if p(element) then cons(element, acc) else acc)
 
   /* Note: The type is given correctly for append, because it is more complex.
    * Try to understand the type. The constraint 'B >: A' requires that B is a
@@ -142,11 +142,11 @@ enum LazyList[+A]:
    */
   def append[B >: A](that: => LazyList[B]): LazyList[B] =
     foldRight[LazyList[B], LazyList[B]] (that)
-      ((element, acc) => Cons(() => element, () => acc))
+      ((element, acc) => cons(element, acc))
 
   // Note: The type is incorrect, you need to fix it
-  def flatMap[B >: A](f: A => LazyList[B]): LazyList[B] =
-    foldRight[LazyList[A], LazyList[B]] (Empty)
+  def flatMap[B](f: A => LazyList[B]): LazyList[B] =
+    foldRight[LazyList[B], LazyList[B]] (Empty)
       ((element, acc) => f(element).append(acc))
 
   // Exercise 9
@@ -162,16 +162,31 @@ enum LazyList[+A]:
   // Exercise 13
 
   def mapUnfold[B](f: A => B): LazyList[B] =
-    ???
+    unfold(this) {
+      case LazyList.Empty => None
+      case LazyList.Cons(h, t) => Some(f(h()), t())
+    }
 
   def takeUnfold(n: Int): LazyList[A] =
-    ???
+    unfold((this, n)) ((as, num) => as match {
+      case LazyList.Empty => None
+      case LazyList.Cons(h, t) => if num > 0 then Some(h(), (t(), num - 1)) else None
+    })
 
   def takeWhileUnfold(p: A => Boolean): LazyList[A] =
-    ???
+    unfold(this) {
+      case LazyList.Empty => None
+      case LazyList.Cons(h, t) => if p(h()) then Some(h(), t()) else None
+    }
 
   def zipWith[B >: A, C](ope: (=> B, => B) => C)(bs: LazyList[B]): LazyList[C] =
-    ???
+    unfold((this, bs)) ((asUnfolded, bsUnfolded) => asUnfolded match
+      case LazyList.Empty => None
+      case LazyList.Cons(h1, t1) => bsUnfolded match {
+        case LazyList.Empty => None
+        case LazyList.Cons(h2, t2) => Some(ope(h1(), h2()), (t1(), t2()))
+      }
+    )
 
 end LazyList // enum ADT
 
@@ -209,26 +224,27 @@ object LazyList:
   // Exercise 10
 
   // Note: The type is incorrect, you need to fix it
-  lazy val fibs: LazyList[Int] = ???
-//    fibs.foldRight[LazyList[Int], LazyList[Int]]
-//      (cons(1, cons(0, empty))) ((i, acc) => cons(acc.headOption.getOrElse(0) + i, acc))
-
+  lazy val fibs: LazyList[Int] =
+    def fibRecursive(previous: Int, current: Int): LazyList[Int] =
+      cons(previous, fibRecursive(current, previous + current))
+    fibRecursive(0, 1)
 
   // Exercise 11
 
   def unfold[A, S](z: S)(f: S => Option[(A, S)]): LazyList[A] =
-    f(z).map((a, s) => cons(a, unfold1(s)(f))).getOrElse(empty)
+    f(z).map((a, s) => cons(a, unfold(s)(f))).getOrElse(empty)
 
   def unfold1[A, S](z: S)(f: S => Option[(A, S)]): LazyList[A] =
     f(z) match
-      case Some((a, s)) => cons(a, unfold(s)(f))
+      case Some((a, s)) => cons(a, unfold1(s)(f))
       case None => empty
 
   // Exercise 12
 
   // Note: The type is incorrect, you need to fix it
-  lazy val fibsUnfold: LazyList[Int] = ???
-//    unfold (cons(1, cons(0, empty))) ((current, previous) => )
+  lazy val fibsUnfold: LazyList[Int] =
+    unfold[Int, (Int, Int)] (0, 1)
+      ((previous, current) => Some(previous, (current, previous + current)))
 
   // Scroll up for Exercise 13 to the enum
 
