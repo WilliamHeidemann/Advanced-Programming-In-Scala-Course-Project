@@ -3,6 +3,7 @@
 
 package adpro.state.solution
 
+import adpro.state.{RNG, State}
 import org.scalacheck.*
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.*

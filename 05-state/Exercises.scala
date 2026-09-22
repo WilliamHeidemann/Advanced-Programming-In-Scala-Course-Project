@@ -9,48 +9,64 @@ import adpro.lazyList.LazyList.*
 
 trait RNG:
   /** Generate a random `Int`. We define other functions using `nextInt`. */
-  def nextInt: (Int, RNG) 
+  def nextInt: (Int, RNG)
 
 object RNG:
 
   case class SimpleRNG(seed: Long) extends RNG:
     def nextInt: (Int, RNG) =
       // `&` is bitwise AND. We use the current seed to generate a new seed.
-      val newSeed = (seed * 0x5DEECE66DL + 0xBL) & 0xFFFFFFFFFFFFL 
+      val newSeed = (seed * 0x5DEECE66DL + 0xBL) & 0xFFFFFFFFFFFFL
       // The next state, which is an `RNG` instance created from the new seed. 
       val nextRNG = SimpleRNG(newSeed)
       // `>>>` is right binary shift with zero fill. 
       // The value `n` is our new pseudo-random integer.
-      val n = (newSeed >>> 16).toInt 
+      val n = (newSeed >>> 16).toInt
       // The return value is a tuple containing both a pseudo-random integer and the next `RNG` state.
-      (n, nextRNG) 
+      (n, nextRNG)
 
 
   // Exercise 1
 
-  def nonNegativeInt(rng: RNG): (Int, RNG) =
-    ???
+  def nonNegativeInt(rng: RNG): (Int, RNG) = {
+    val (i, r1) = rng.nextInt
+    val iPositive = if i == Int.MinValue then 0 else i.abs
+    (iPositive, r1)
+  }
 
   // Exercise 2
 
-  def double(rng: RNG): (Double, RNG) = 
-    ???
+  def double(rng: RNG): (Double, RNG) = {
+    val (i, r1) = nonNegativeInt(rng)
+    (i.toDouble / Int.MaxValue.toDouble, r1)
+  }
 
   // Exercise 3
-  
-  // The return type is broken and needs to be fixed
-  def intDouble(rng: RNG): Any = 
-    ???
 
   // The return type is broken and needs to be fixed
-  def doubleInt(rng: RNG): Any = 
-    ???
+  def intDouble(rng: RNG): ((Int, Double), RNG) = {
+    val (i, r1) = rng.nextInt
+    val (d, r2) = double(r1)
+    ((i, d), r2)
+  }
+
+  // The return type is broken and needs to be fixed
+  def doubleInt(rng: RNG): ((Double, Int), RNG) =
+    val (d, r1) = double(rng)
+    val (i, r2) = nonNegativeInt(r1)
+    ((d, i), r2)
 
   // Exercise 4
 
   // The return type is broken and needs to be fixed
-  def ints(size: Int)(rng: RNG): Any = 
-    ???
+  def ints(size: Int)(rng: RNG): (List[Int], RNG) = {
+    def recurse(acc: List[Int], x: Int, rng: RNG): (List[Int], RNG) =
+      if x <= 0 then (acc, rng)
+      else
+        val (i, r1) = rng.nextInt
+        recurse(i :: acc, x - 1, r1)
+    recurse(List.empty, size, rng)
+  }
 
 
   type Rand[+A] = RNG => (A, RNG)
@@ -59,7 +75,7 @@ object RNG:
 
   def unit[A](a: A): Rand[A] = rng => (a, rng)
 
-  def map[A,B](s: Rand[A])(f: A => B): Rand[B] =
+  def map[A, B](s: Rand[A])(f: A => B): Rand[B] =
     rng => {
       val (a, rng2) = s(rng)
       (f(a), rng2)
@@ -69,25 +85,25 @@ object RNG:
 
   // Exercise 5
 
-  lazy val double2: Rand[Double] = 
+  lazy val double2: Rand[Double] =
     ???
 
   // Exercise 6
 
-  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = 
+  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
     ???
 
   // Exercise 7
 
   def sequence[A](ras: List[Rand[A]]): Rand[List[A]] =
-    ??? 
+    ???
 
   def ints2(size: Int): Rand[List[Int]] =
     ???
 
   // Exercise 8
 
-  def flatMap[A,B](f: Rand[A])(g: A => Rand[B]): Rand[B] =
+  def flatMap[A, B](f: Rand[A])(g: A => Rand[B]): Rand[B] =
     ???
 
   def nonNegativeLessThan(bound: Int): Rand[Int] =
@@ -101,14 +117,14 @@ case class State[S, +A](run: S => (A, S)):
 
   // Exercise 9 (methods in class State)
   // Search for the second part (sequence) below
-  
-  def flatMap[B](f: A => State[S, B]): State[S, B] = 
+
+  def flatMap[B](f: A => State[S, B]): State[S, B] =
     ???
 
-  def map[B](f: A => B): State[S, B] = 
+  def map[B](f: A => B): State[S, B] =
     ???
 
-  def map2[B,C](sb: State[S, B])(f: (A, B) => C): State[S, C] = 
+  def map2[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
     ???
 
 
@@ -131,23 +147,23 @@ object State:
   type Rand[A] = State[RNG, A]
 
   // Exercise 9 (sequence, continued)
- 
-  def sequence[S,A](sas: List[State[S, A]]): State[S, List[A]] =
+
+  def sequence[S, A](sas: List[State[S, A]]): State[S, List[A]] =
     ???
 
   import adpro.lazyList.LazyList
 
   // Exercise 10 (stateToLazyList)
-  
-  def stateToLazyList[S, A](s: State[S,A])(initial: S): LazyList[A] =
+
+  def stateToLazyList[S, A](s: State[S, A])(initial: S): LazyList[A] =
     ???
 
   // Exercise 11 (lazyInts out of stateToLazyList)
-  
-  def lazyInts(rng: RNG): LazyList[Int] = 
+
+  def lazyInts(rng: RNG): LazyList[Int] =
     ???
 
-  lazy val tenStrictInts: List[Int] = 
+  lazy val tenStrictInts: List[Int] =
     ???
 
 end State
