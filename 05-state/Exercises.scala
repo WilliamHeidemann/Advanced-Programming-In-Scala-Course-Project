@@ -5,6 +5,7 @@ package adpro.state
 
 import adpro.lazyList.LazyList
 import adpro.lazyList.LazyList.*
+import adpro.state.RNG.SimpleRNG
 
 
 trait RNG:
@@ -179,21 +180,24 @@ object State:
   // Exercise 9 (sequence, continued)
 
   def sequence[S, A](sas: List[State[S, A]]): State[S, List[A]] =
-    sas.foldRight[State[S, List[A]]](unit(List.empty))((s, acc) => s.map2(acc)((a, b) => a::b))
+    sas.foldRight[State[S, List[A]]](unit(List.empty))((s, acc) => s.map2(acc)((a, b) => a :: b))
 
   import adpro.lazyList.LazyList
 
   // Exercise 10 (stateToLazyList)
 
-  def stateToLazyList[S, A](s: State[S, A])(initial: S): LazyList[A] =
-    ???
+  def stateToLazyList[S, A](s: State[S, A])(initial: S): LazyList[A] = {
+    val (a, s1) = s.run(initial)
+    cons(a, stateToLazyList(s)(s1))
+  }
 
   // Exercise 11 (lazyInts out of stateToLazyList)
 
   def lazyInts(rng: RNG): LazyList[Int] =
-    ???
+    stateToLazyList[RNG, Int](State{rng => rng.nextInt})(rng.nextInt._2)
+
 
   lazy val tenStrictInts: List[Int] =
-    ???
+    lazyInts(SimpleRNG(42)).take(10).toList
 
 end State
