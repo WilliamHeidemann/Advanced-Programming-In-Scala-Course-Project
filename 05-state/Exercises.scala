@@ -88,9 +88,7 @@ object RNG:
   // Exercise 5
 
   lazy val double2: Rand[Double] =
-    map[Int, Double](RNG.int)(i =>
-      val iPositive = if i == Int.MinValue then 0 else i.abs
-      iPositive.toDouble / Int.MaxValue.toDouble)
+    map[Int, Double](nonNegativeInt)(i => i.toDouble / Int.MaxValue.toDouble)
 
   // Exercise 6
 
@@ -119,10 +117,7 @@ object RNG:
       g(a)(r1)
 
   def nonNegativeLessThan(bound: Int): Rand[Int] =
-    flatMap(nonNegativeInt)(i =>
-      val iBound = i % bound
-      rng => (iBound, rng)
-    )
+    flatMap(nonNegativeInt)(i => unit(i % bound))
 
 end RNG
 
@@ -137,26 +132,28 @@ case class State[S, +A](run: S => (A, S)):
     State {
       s =>
         val (a, s1) = run(s)
-        val s2 = f(a)
-        s2.run(s1)
+        f(a).run(s1)
     }
   }
 
   def map[B](f: A => B): State[S, B] =
-    State {
-      s =>
-        val (a, s1) = run(s)
-        val b = f(a)
-        (b, s1)
-    }
+    flatMap(a => unit(f(a)))
+  //    State {
+  //      s =>
+  //        val (a, s1) = run(s)
+  //        val b = f(a)
+  //        (b, s1)
+  //    }
 
   def map2[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
-    State {
-      s =>
-        val (a, s1) = run(s)
-        val (b, s2) = sb.run(s1)
-        (f(a, b), s2)
-    }
+    flatMap(a => sb.map(b => f(a, b)))
+
+//    State {
+//      s =>
+//        val (a, s1) = run(s)
+//        val (b, s2) = sb.run(s1)
+//        (f(a, b), s2)
+//    }
 
 
 object State:
@@ -194,7 +191,7 @@ object State:
   // Exercise 11 (lazyInts out of stateToLazyList)
 
   def lazyInts(rng: RNG): LazyList[Int] =
-    stateToLazyList[RNG, Int](State{rng => rng.nextInt})(rng.nextInt._2)
+    stateToLazyList[RNG, Int](State { rng => rng.nextInt })(rng)
 
 
   lazy val tenStrictInts: List[Int] =
