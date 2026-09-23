@@ -46,7 +46,7 @@ object RNG:
 
   // The return type is broken and needs to be fixed
   def intDouble(rng: RNG): ((Int, Double), RNG) = {
-    val (i, r1) = rng.nextInt
+    val (i, r1) = nonNegativeInt(rng)
     val (d, r2) = double(r1)
     ((i, d), r2)
   }
