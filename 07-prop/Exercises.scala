@@ -3,18 +3,19 @@
 
 package adpro.prop
 
+import adpro.state
 import adpro.state.*
 
-val TODO = 42
+val seed = 42
 
 // Exercise 1
 
-lazy val rng1: RNG = ???
+lazy val rng1: RNG = RNG.Simple(seed)
 
 // Exercise 2
 
-lazy val (x, rng2): (Int, RNG) = ???
-lazy val y = ???
+lazy val (x, rng2): (Int, RNG) = rng1.nextInt
+lazy val y = rng2.nextInt._1
 
 // Exercise 3
 
@@ -31,10 +32,16 @@ object Exercise_3:
   // allow the teachers to test them with different mutants of `minimum`.
 
   def p1Min (minimum: List[Int] => Int): org.scalacheck.Prop =
-    ???
+    org.scalacheck.Prop.forAll(intList)(list =>
+      val min = minimum(list)
+      list.forall(x => x >= min)
+    )
 
   def p2Min (minimum: List[Int] => Int): org.scalacheck.Prop =
-    ???
+    org.scalacheck.Prop.forAll(intList)(list =>
+      val min = minimum(list)
+      list.contains(min)
+    )
 
 end Exercise_3
 
@@ -48,7 +55,9 @@ object Exercise_4:
     def check: Boolean
 
     infix def && (that: Prop): Prop =
-      ???
+      new Prop {
+        override def check: Boolean = self.check && that.check
+      }
 
 end Exercise_4
 
