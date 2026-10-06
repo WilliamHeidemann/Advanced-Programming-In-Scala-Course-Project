@@ -5,6 +5,7 @@ package adpro.prop
 
 import adpro.state
 import adpro.state.*
+import adpro.state.RNG.double
 
 val seed = 42
 
@@ -71,37 +72,54 @@ object Gen:
       LazyList.unfold[A,RNG](rng)(rng => Some(g.run(rng)))
 
   // Exercise 5
-  def choose (start: Int, stopExclusive: Int): Gen[Int] =
-    ???
+  def choose (start: Int, stopExclusive: Int): Gen[Int] = {
+    if start < 0 then throw new IllegalArgumentException("start must be greater than 0.")
+    else if stopExclusive < start then throw new IllegalArgumentException("stop must be greater than start.")
+    else State[RNG, Int] {
+      rng =>
+        val (i, rng2) = RNG.nonNegativeInt(rng)
+        ((i + start) % stopExclusive, rng2)
+    }
+  }
 
   // Exercise 6
 
-  def unit[A] (a: =>A): Gen[A] =
-    ???
+  def unit[A] (a: =>A): Gen[A] = State[RNG, A] { rng => (a, rng) }
 
   def boolean: Gen[Boolean] =
-    ???
+    State[RNG, Boolean] {
+      rng =>
+        val (i, rng2) = rng.nextInt
+        val b = i % 2 == 0
+        (b, rng2)
+    }
 
   def double: Gen[Double] =
-    ???
+    State[RNG, Double] {
+      RNG.double
+    }
 
   // Exercise 7
 
   extension [A](self: Gen[A])
 
-    def listOfN(n: Int): Gen[List[A]] =
-      ???
+    def listOfN(n: Int): Gen[List[A]] = State.sequence[RNG, A](List.fill(n)(self))
 
   // Exercise 8
 
-  // Write here ... ???
+  // Gen[A] is an opaque type and not an object. opaque types can appear to have methods by using extension methods.
+  // This may serve a memory allocation by preventing a boxing closure.
 
   // Exercise 9
 
   extension [A](self: Gen[A])
 
     def flatMap[B](f: A => Gen[B]): Gen[B] =
-      ???
+      State {
+        rng =>
+          val (a, rng2) = self.run(rng)
+          f(a).run(rng2)
+      }
 
     // It will be convenient to also have map (uses flatMap)
     def map[B](f: A => B): Gen[B] =
