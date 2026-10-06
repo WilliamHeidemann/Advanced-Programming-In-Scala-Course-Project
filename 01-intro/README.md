@@ -33,6 +33,9 @@ More info at: https://scala-cli.virtuslab.org/docs/overview/
 
 # Working on the exercises
 
+To work on the exercises of week NN, work inside the directory NN-*. (The code
+is not designed to run a project a the root of this repository.)
+
 To work on the exercises it is best to run `scala-cli test . -w`
 in a terminal, and then open `Exercises.scala` in an editor. Solve
 the exercises replacing `???` with your solution. Every time you
