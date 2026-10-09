@@ -130,14 +130,14 @@ object Gen:
 
   extension [A](self: Gen[A])
     def listOf(size: Gen[Int]): Gen[List[A]] =
-      ???
+      size.flatMap(n => self.listOfN(n))
 
 
   // Exercise 11
 
   extension [A](self: Gen[A])
     def union (that: Gen[A]): Gen[A] =
-      ???
+      Gen.boolean.flatMap(b => if b then self else that)
 
 end Gen
 
