@@ -5,7 +5,6 @@ package adpro.prop
 
 import adpro.state
 import adpro.state.*
-import adpro.state.RNG.double
 
 val seed = 42
 
@@ -78,7 +77,9 @@ object Gen:
     else State[RNG, Int] {
       rng =>
         val (i, rng2) = RNG.nonNegativeInt(rng)
-        ((i + start) % stopExclusive, rng2)
+        val diff = stopExclusive - start
+        val result = (i % diff) + start
+        (result, rng2)
     }
   }
 
@@ -96,7 +97,9 @@ object Gen:
 
   def double: Gen[Double] =
     State[RNG, Double] {
-      RNG.double
+      rng =>
+        val (i, r1) = RNG.int(rng)
+        (i.toDouble, r1)
     }
 
   // Exercise 7
@@ -151,22 +154,22 @@ object Exercise_12:
   // listOf are tested (so rename if you use another than the first)
 
   def listOfN[A: Gen](n: Int): Gen[List[A]] =
-    ???
+    summon[Gen[A]].listOfN(n)
 
   def listOfN_[A: Gen]: Int => Gen[List[A]] =
-    ???
+    n => summon[Gen[A]].listOfN(n)
 
   def listOfN__ [A](n: Int)(using genA: Gen[A]): Gen[List[A]] =
-    ???
+    genA.listOfN(n)
 
   // Choose one of the following templates, but note only listOfN and
   // listOf are tested (so rename if you use another than the first)
 
   def listOf[A: Gen](using genInt: Gen[Int]): Gen[List[A]] =
-    ???
+    genInt.flatMap(n => summon[Gen[A]].listOfN(n))
 
   def listOf_[A] (using genInt: Gen[Int], genA: Gen[A]): Gen[List[A]] =
-    ???
+    genInt.flatMap(n => genA.listOfN(n))
 
 end Exercise_12
 
