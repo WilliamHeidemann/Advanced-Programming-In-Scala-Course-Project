@@ -226,10 +226,16 @@ def forAllNotSized[A] = forAll[A]
 
 extension (self: Prop)
   infix def && (that: Prop): Prop = (maxSize, tcs, rng) =>
-    ???
+    self(maxSize, tcs, rng) match {
+      case Result.Passed => that(maxSize, tcs, rng)
+      case Result.Falsified(failure, successes) => Result.Falsified(failure, successes)
+    }
 
   infix def || (that: Prop): Prop = (maxSize, tcs, rng) =>
-    ???
+    self(maxSize, tcs, rng) match {
+      case Result.Passed => Result.Passed
+      case Result.Falsified(failure, successes) => that(maxSize, tcs, rng)
+    }
 
   def apply(maxSize: MaxSize, tcs: TestCases, rng: RNG): Result =
     self(maxSize, tcs, rng)
@@ -244,13 +250,13 @@ extension [A](self: SGen[A])
 
 extension [A](self: Gen[A])
   def unsized: SGen[A] =
-    ???
+    n => self
 
 // Exercise 15
 
 extension [A](self: Gen[A])
   def list: SGen[List[A]] =
-    ???
+    n => self.listOfN(n)
 
 // A sized implementation of prop, takes MaxSize to generate
 // test cases of given size.
