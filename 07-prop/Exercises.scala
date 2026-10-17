@@ -72,8 +72,7 @@ object Gen:
 
   // Exercise 5
   def choose (start: Int, stopExclusive: Int): Gen[Int] = {
-    if start < 0 then throw new IllegalArgumentException("start must be greater than 0.")
-    else if stopExclusive < start then throw new IllegalArgumentException("stop must be greater than start.")
+    if stopExclusive < start then throw new IllegalArgumentException("stop must be greater than start.")
     else State[RNG, Int] {
       rng =>
         val (i, rng2) = RNG.nonNegativeInt(rng)
@@ -310,11 +309,25 @@ object Exercise_16:
   // The properties are put into a function taking `minimum` as argument to
   // allow the teachers to test them with different mutants of `minimum`.
 
-  def p1Min(minimum: List[Int] => Int): Prop =
-    ???
+  // Prop = (MaxSize, TestCases, RNG) => Result
 
+  // min less than or equal to all numbers in the list
+  def p1Min(minimum: List[Int] => Int): Prop =
+    val g: SGen[List[Int]] = nonEmptyList
+    val f: List[Int] => Boolean =
+      list =>
+        val m = minimum(list)
+        list.forall(other => m <= other)
+    Prop.forAll[List[Int]](g)(f)
+
+  // min exists in the list
   def p2Min(minimum: List[Int] => Int): Prop =
-    ???
+    val g: SGen[List[Int]] = nonEmptyList
+    val f: List[Int] => Boolean =
+      list =>
+        val m = minimum(list)
+        list.contains(m)
+    Prop.forAll[List[Int]](g)(f)
 
 end Exercise_16
 
