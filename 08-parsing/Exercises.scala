@@ -525,7 +525,14 @@ object Sliceable
   // Exercise 10
 
   def regex(r: Regex): Parser[String] = (s: ParseState) =>
-    ???
+    val input = s.input
+    val finding = r.findPrefixOf(input)
+    finding match
+      case Some(value) =>
+        if s.isSliced
+        then Result.Slice(value.length)
+        else Result.Success(value, value.length)
+      case None => Result.Failure(s.loc.toError(s"regex $r"), false)
 
 end Sliceable
 
