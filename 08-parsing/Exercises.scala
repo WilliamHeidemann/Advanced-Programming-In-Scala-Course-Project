@@ -451,7 +451,7 @@ object Sliceable
 
   /** Consume no characters and succeed with the given value */
   def succeed[A](a: A): Parser[A] =
-    ???
+    s => Success(a, 0)
 
   // For Exercise 9 continue reading below
 
@@ -512,7 +512,15 @@ object Sliceable
 
   extension [A](p: Parser[A])
     def or(p2: => Parser[A]): Parser[A] =
-      ???
+      s =>
+        p(s) match {
+          case Result.Failure(get, isCommitted) =>
+            if isCommitted
+            then Result.Failure(get, isCommitted)
+            else p2(s)
+          case Result.Slice(length) => Result.Slice(length)
+          case Result.Success(get, length) => Result.Success(get, length)
+        }
 
   // Exercise 10
 
