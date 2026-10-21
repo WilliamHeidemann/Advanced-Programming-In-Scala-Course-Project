@@ -567,6 +567,12 @@ class JSONParser[ParseError, Parser[+_]](P: Parsers[ParseError, Parser]):
   lazy val ws: Parser[Unit] =
     regex("""\s+""".r).map { _ => () }
 
+  lazy val BRACKETED: Parser[String] =
+    regex("""\[([^]]*)\]""".r).map { _.dropRight(1).substring(1) }
+
+  lazy val CURLY: Parser[String] =
+    regex("""\{([^}]*)\}""".r).map { _.dropRight(1).substring(1) }
+
   // Exercise 13
 
   lazy val jnull: Parser[JSON] =
@@ -601,7 +607,7 @@ class JSONParser[ParseError, Parser[+_]](P: Parsers[ParseError, Parser]):
     (char('{') |* ws.? |* commaSeparatedFields *| ws.? *| char('}')).map(list => JObject(list.toMap))
 
   lazy val json: Parser[JSON] =
-    jobject
+    ws.? |* (jnull | jbool | jstring | jnumber | jarray | jobject)
 
   // Exercise 14 (no code)
 
@@ -609,8 +615,8 @@ class JSONParser[ParseError, Parser[+_]](P: Parsers[ParseError, Parser]):
   //
   // Write here:
   //
-  // (1) ...
+  // (1) The laws are implementation agnostic
   //
-  // (2) ...
+  // (2) They must be true regardless of implementation
 
 end JSONParser
