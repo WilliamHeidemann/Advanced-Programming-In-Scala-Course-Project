@@ -589,7 +589,7 @@ class JSONParser[ParseError, Parser[+_]](P: Parsers[ParseError, Parser]):
     json.map2((string(",") |* ws.? ** json).map(_._2).many)(_ :: _) | succeed(Nil)
 
   lazy val jarray: Parser[JArray] =
-    char('[') |* ws.? |* commaSeparatedVals.map(list => JArray(list.toIndexedSeq)) *| ws.? *| char(']')
+    (char('[') |* ws.? |* commaSeparatedVals *| ws.? *| char(']')).map(list => JArray(list.toIndexedSeq))
 
   lazy val field: Parser[(String, JSON)] =
     QUOTED *| ws.? *| char(':') *| ws.? ** json
@@ -598,10 +598,10 @@ class JSONParser[ParseError, Parser[+_]](P: Parsers[ParseError, Parser]):
     field.map2((string(",") |* ws.? ** field).map(_._2).many)(_ :: _) | succeed(Nil)
 
   lazy val jobject: Parser[JObject] =
-    char('{') |* ws.? |* commaSeparatedFields.map(list => JObject(list.toMap)) *| ws.? *| char('}')
+    (char('{') |* ws.? |* commaSeparatedFields *| ws.? *| char('}')).map(list => JObject(list.toMap))
 
   lazy val json: Parser[JSON] =
-    ???
+    jobject
 
   // Exercise 14 (no code)
 
