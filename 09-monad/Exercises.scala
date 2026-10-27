@@ -269,8 +269,9 @@ end Functor
 
 // Exercise 13
 
-lazy val optionFunctor: Functor[Option] = ???
-
+lazy val optionFunctor: Functor[Option] = new:
+  extension [A] (oa: Option[A])
+    def map[B](f: A => B): Option[B] = oa.map(f)
 
 // this instance is provided
 val listFunctor: Functor[List] = new:
@@ -286,7 +287,7 @@ object FunctorEx14Spec
   // Exercise 14
 
   property("Ex14.02: optionFunctor satisfies map law (tests Exercise 13)") =
-    ???
+    optionFunctor.functorLaws.map[Int]
 
 end FunctorEx14Spec
 
