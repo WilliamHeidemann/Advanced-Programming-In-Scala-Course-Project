@@ -3,7 +3,7 @@
 
 package adpro.monad
 
-import org.scalacheck.{Arbitrary, Prop}
+import org.scalacheck.{Arbitrary, Gen, Prop}
 import org.scalacheck.Prop.*
 import org.scalacheck.Prop.given
 import org.scalactic.Equality
@@ -59,31 +59,50 @@ def listMonoid[A] = new Monoid[List[A]]:
 
 // Exercise 1
 
-lazy val intAddition: Monoid[Int] = ???
+lazy val intAddition: Monoid[Int] = new:
+  def combine(a1: Int, a2: Int) = a1 + a2
+  val empty = 0
 
-lazy val intMultiplication: Monoid[Int] = ???
+lazy val intMultiplication: Monoid[Int] = new:
+  def combine(a1: Int, a2: Int) = a1 * a2
+  val empty = 1
 
-lazy val booleanOr: Monoid[Boolean] = ???
+lazy val booleanOr: Monoid[Boolean] = new:
+  def combine(a1: Boolean, a2: Boolean) = a1 || a2
+  val empty = false
 
-lazy val booleanAnd: Monoid[Boolean] = ???
+lazy val booleanAnd: Monoid[Boolean] = new:
+  def combine(a1: Boolean, a2: Boolean) = a1 && a2
+  val empty = true
 
 
 // Exercise 2
 
 // a)
 
-def optionMonoid[A]: Monoid[Option[A]] = ???
+def optionMonoid[A]: Monoid[Option[A]] = new:
+  def combine(a1: Option[A], a2: Option[A]) = a1 match
+    case None => a2
+    case Some(value) => Some(value)
+  val empty = None
 
 
 // b)
 
-def optionMonoidLift[A: Monoid]: Monoid[Option[A]] = ???
-
+def optionMonoidLift[A: Monoid]: Monoid[Option[A]] = new:
+  def combine(a1: Option[A], a2: Option[A]) = a1 match
+    case None => a2
+    case Some(v1) => a2 match
+      case Some(v2) => Some(summon[Monoid[A]].combine(v1, v2))
+      case None => Some(v1)
+  val empty = None
 
 // Exercise 3
 
-def endoMonoid[A]: Monoid[A => A] = ???
-
+def endoMonoid[A]: Monoid[A => A] = new:
+  def combine(f1: A => A, f2: A => A) =
+    a => f2(f1(a))
+  val empty = identity
 
 // Exercise 4 (tests exercises 1-2, written by student)
 
@@ -91,22 +110,22 @@ object MonoidEx4Spec
   extends org.scalacheck.Properties("exerc4"):
 
   property("Ex04.01: intAddition is a monoid") =
-    ???
+    intAddition.laws.monoid
 
   property("Ex04.02: intMultiplication is a monoid") =
-    ???
+    intMultiplication.laws.monoid
 
   property("Ex04.03: booleanOr is a monoid") =
-    ???
+    booleanOr.laws.monoid
 
   property("Ex04.04: booleanAnd is a monoid") =
-    ???
+    booleanAnd.laws.monoid
 
   property("Ex04.05: optionMonoid is a monoid") =
-    ???
+    optionMonoid[Int].laws.monoid
 
   property("Ex04.06: optionMonoidLift is a monoid") =
-    ???
+    optionMonoidLift[Int](using intAddition).laws.monoid
 
 end MonoidEx4Spec
 
@@ -118,8 +137,7 @@ end MonoidEx4Spec
 
 extension [B](mb: Monoid[B])
   def foldMap[A](as: List[A])(f: A => B): B =
-    ???
-
+    as.foldLeft(mb.empty)((b, a) => mb.combine(b, f(a)))
 
 // Exercise 6
 
@@ -132,11 +150,12 @@ extension [B](mb: Monoid[B])
 extension [A: {Arbitrary, Equality}](ma: Monoid[A])
 
   def homomorphism[B](f: A => B)(mb: Monoid[B]): Prop =
-    ???
+    forAll { (a1: A, a2: A) => f(ma.combine(a1, a2)) === mb.combine(f(a1), f(a2)) }
 
   def isomorphism[B: Arbitrary](f: A => B, g: B => A)(mb: Monoid[B]): Prop =
-    ???
-
+    homomorphism(f)(mb) &&
+      forAll { (a: A) => g(f(a)) == a }
+      forAll { (b: B) => f(g(b)) == b }
 
 // Exercise 7 (tests for Exercise 6, written by the student)
 
@@ -144,7 +163,7 @@ object MonoidEx7Spec
   extends org.scalacheck.Properties("exerc7"):
 
   property("Ex07.01: stringMonoid is isomorphic to listMonoid[Char]") =
-    ???
+    stringMonoid.isomorphism(s => s.toList, l => l.mkString)(listMonoid[Char])
 
 
 // "Exercise 8 (tests for Exercise 1, written the by student)
@@ -153,12 +172,14 @@ object MonoidEx8Spec
   extends org.scalacheck.Properties("exerc8"):
 
   property("Ex08.01: booleanOr is isomorphic to booleanAnd") =
-    ???
+    booleanOr.isomorphism(b => !b, b => !b)(booleanAnd)
 
 
 // Exercise 9
 
-def productMonoid[A, B](ma: Monoid[A])(mb: Monoid[B]) = ???
+def productMonoid[A, B](ma: Monoid[A])(mb: Monoid[B]): Monoid[(A, B)] = new:
+  def combine(a1: (A, B), a2: (A, B)) = (ma.combine(a1._1, a2._1), mb.combine(a1._2, a2._2))
+  val empty = (ma.empty, mb.empty)
 
 
 // Exercise 10 (tests for Exercise 9, written by the student)
@@ -167,7 +188,7 @@ object MonoidEx10Spec
   extends org.scalacheck.Properties("exer10"):
 
   property("Ex10.01: productMonoid(optionMonoid[Int])(listMonoid[String]) gives a monoid") =
-    ???
+    productMonoid(optionMonoid[Int])(listMonoid[String]).laws.monoid
 
 
 /* This will be used in the Foldable below: We can get the dual of any monoid
