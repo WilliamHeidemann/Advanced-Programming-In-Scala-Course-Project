@@ -223,8 +223,10 @@ end Foldable
 
 // Exercise 11
 
-given foldableList: [A] => Foldable[List] = ???
-
+given foldableList: Foldable[List] = new:
+  extension [A](as: List[A])
+    def foldMap[B](f: A => B)(using mb: Monoid[B]): B =
+      as.foldLeft(mb.empty)((b, a) => mb.combine(b, f(a)))
 
 // Exercise 12
 
@@ -233,9 +235,7 @@ given foldableList: [A] => Foldable[List] = ???
 
 extension [F[_]: Foldable, A] (as: F[A])
   def toList: List[A] = as.toListF
-  def toListF: List[A] =
-    ???
-
+  def toListF: List[A] = as.foldRight[List[A]](Nil)((a, b) => a::b)
 
 
 /***** Part III. Functor */
