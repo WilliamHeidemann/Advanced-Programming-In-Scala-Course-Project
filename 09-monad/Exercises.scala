@@ -350,10 +350,17 @@ end Monad
 
 // Exercise 15
 
-lazy val optionMonad: Monad[Option] = ???
+lazy val optionMonad: Monad[Option] = new:
+  def unit[A](a: => A): Option[A] = Some(a)
+  extension [A](oa: Option[A])
+    def flatMap[B](f: A => Option[B]): Option[B] =
+      oa.flatMap(f)
 
-lazy val listMonad: Monad[List] = ???
-
+lazy val listMonad: Monad[List] = new:
+  def unit[A](a: => A): List[A] = a::Nil
+  extension [A](as: List[A])
+    def flatMap[B](f: A => List[B]): List[B] =
+      as.flatMap(f)
 
 // Exercise 16 (tests for Exercise 15, written by the student)
 
@@ -361,10 +368,10 @@ object FunctorEx16Spec
   extends org.scalacheck.Properties("exer16"):
 
   property("Ex16.01: optionMonad is a monad") =
-    ???
+    optionMonad.monadLaws.monad[Int, Double, String]
 
   property("Ex16.02: listMonad is a monad") =
-    ???
+    listMonad.monadLaws.monad[Int, Double, String]
 
 end FunctorEx16Spec
 
@@ -376,22 +383,25 @@ end FunctorEx16Spec
 
 extension [F[_]](m: Monad[F])
   def sequence[A](fas: List[F[A]]): F[List[A]] =
-    ???
-
+    fas.foldRight(m.unit(List.empty[A]))((fa, acc) => m.map2[A](fa)[List[A], List[A]](acc)(_ :: _))
 
 // Exercise 18
 
 extension [F[_]](m: Monad[F])
   def replicateM[A](n: Int, ma: F[A]): F[List[A]] =
-    ???
+    m.sequence(List.fill(n)(ma))
 
-// Write in the answer below ...
-//
-// ???
+// For options it goes from Option[A] to Option[List[A]] where the list has length n.
+// What is inside the list is replicated n times.
+
+// For lists it goes from List[A] to List[List[A]] where the number of lists is n.
+// Each list inside is the original
+
+// The method takes some type constructor of A and replicates the inside items A n many times
 
 
 // Exercise 19
 
 extension [F[_]](m: Monad[F])
   def compose[A, B, C](f: A => F[B], g: B => F[C]): A => F[C] =
-    ???
+    a => m.flatMap(f(a))(g)
