@@ -1,0 +1,3 @@
+Start in 'src/main/scala/Exam2019Autumn.scala'
+This project uses sbt (not scala-cli). Run it using 'sbt test'
+

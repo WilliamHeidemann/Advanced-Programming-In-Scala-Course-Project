@@ -1,3 +1,4 @@
 .idea/*
 .bsp/*
 .scala-build/*
+.envrc
