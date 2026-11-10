@@ -209,10 +209,31 @@ object StateEvaluator:
   // Exercise 7
   def tick: M[Unit] = M { (x: State) => ((), x+1) }
 
-  def evalMonad (term: Term): M[Int] = ???
+  def evalMonad (term: Term): M[Int] = term match
+    case Term.Cons(value) => mIsMonad.unit(value)
+    case Term.Div(left, right) =>
+      evalMonad(left).flatMap(lv =>
+        evalMonad(right).flatMap(rv =>
+          if rv == 0
+          then M(_ => throw new ArithmeticException("Division by zero."))
+          else tick.flatMap(_ => mIsMonad.unit(lv/rv))
+        )
+      )
 
   // Exercise 8
-  def evalForYield (term: Term): M[Int] = ???
+  def evalForYield (term: Term): M[Int] = term match {
+    case Term.Cons(value) => mIsMonad.unit(value)
+    case Term.Div(left, right) =>
+      val pair = for
+        lv <- evalForYield(left)
+        rv <- evalForYield(right)
+      yield (lv, rv)
+      pair.flatMap((l, r) =>
+        if r == 0
+        then M(_ => throw new ArithmeticException("Division by zero."))
+        else tick.flatMap(_ => mIsMonad.unit(l/r))
+      )
+  }
 
 end StateEvaluator
 
