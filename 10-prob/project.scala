@@ -3,7 +3,7 @@
 //> using scala 3.8.4
 //> using options -Werror -deprecation -feature -source:future -language:adhocExtensions
 //> using dep "org.scalacheck::scalacheck:1.20.0"
-//> using repository "https://codeberg.org/api/packages/wasowski/maven"
+// > using repository "https://codeberg.org/api/packages/wasowski/maven"
 // > using dep "io.codeberg.wasowski::probula:0.2.4"
 //> using jar ./probula.jar
 //> using dep "org.scalactic::scalactic:3.2.20"
