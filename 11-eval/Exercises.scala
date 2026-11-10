@@ -291,7 +291,23 @@ object OutputEvaluator:
   }
 
   // Exercise 12
-  def evalForYield (term: Term): M[Int] = ???
+  def evalForYield (term: Term): M[Int] = term match {
+    case Term.Cons(value) => M(line(term)(value), value)
+    case Term.Div(left, right) =>
+      val pair = for
+        lv <- evalForYield(left)
+        rv <- evalForYield(right)
+      yield (lv, rv)
+      pair.flatMap((l, r) =>
+        if r == 0
+        then throw new ArithmeticException("Division by zero.")
+        else {
+          val result = l / r
+          val o = line(term)(result)
+          M(o, result)
+        }
+      )
+  }
 
   // Exercise 13
   // your notes below
