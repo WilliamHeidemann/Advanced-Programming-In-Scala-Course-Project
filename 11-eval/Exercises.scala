@@ -3,6 +3,7 @@
 
 package adpro.eval
 
+import adpro.eval.ExceptionEvaluator.M.Raise
 import org.scalacheck.{Arbitrary, Prop}
 import org.scalacheck.Prop.*
 
@@ -187,10 +188,23 @@ object StateEvaluator:
 
 
   // Exercise 5
-  def eval (term: Term): M[Int] = ???
+  def eval (term: Term): M[Int] = term match
+    case Term.Cons(value) => StateEvaluator.M(s => (value, s))
+    case Term.Div(left, right) =>
+      eval(left).flatMap(lv => eval(right).flatMap(rv =>
+        StateEvaluator.M(s =>
+          if rv == 0
+          then throw new ArithmeticException("Division by zero.")
+          else (lv / rv, s + 1))))
 
   // Exercise 6
-  given mIsMonad: Monad[M] = ???
+  given mIsMonad: Monad[M] = new:
+    def unit[A] (a: => A): M[A] = M[A](s => (a, s))
+    extension [A](ma: M[A])
+      override def flatMap[B](f: A => M[B]): M[B] =
+        M[B](s =>
+          val (a, s1) = ma.step(s)
+          f(a).step(s1))
 
   // Exercise 7
   def tick: M[Unit] = M { (x: State) => ((), x+1) }
