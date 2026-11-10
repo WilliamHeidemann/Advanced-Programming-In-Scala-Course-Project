@@ -119,13 +119,37 @@ object ExceptionEvaluator:
 
   import M.*
 
-  def eval(term: Term): M[Int] = ???
+  def eval(term: Term): M[Int] = term match {
+    case Term.Cons(value) => Return(value)
+    case Term.Div(left, right) =>
+      eval(left) match {
+        case Raise(e) => Raise(e)
+        case Return(lv) =>
+          eval(right) match {
+            case Raise(e) => Raise(e)
+            case Return(rv) =>
+              if rv == 0
+              then Raise("Division by zero")
+              else Return (lv / rv)
+          }
+      }
+  }
 
   // Exercise 2
-  given mIsMonad: Monad[M] = ???
+  given mIsMonad: Monad[M] = new:
+    def unit[A] (a: => A): M[A] = Return(a)
+    extension [A](ma: M[A])
+      override def flatMap[B](f: A => M[B]): M[B] = ma match
+        case Raise(e) => Raise(e)
+        case Return(a) => f(a)
 
   // Exercise 3
-  def evalMonad(term: Term): M[Int] = ???
+  def evalMonad(term: Term): M[Int] =
+    term match
+      case Term.Cons(value) => Return(value)
+      case Term.Div(left, right) =>
+        evalMonad(left).flatMap(lv =>
+          evalMonad(right).flatMap(rv => Return(lv / rv)))
 
   // Exercise 4
   def evalForYield(term: Term): M[Int] = ???
