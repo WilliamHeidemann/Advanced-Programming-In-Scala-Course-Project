@@ -149,10 +149,25 @@ object ExceptionEvaluator:
       case Term.Cons(value) => Return(value)
       case Term.Div(left, right) =>
         evalMonad(left).flatMap(lv =>
-          evalMonad(right).flatMap(rv => Return(lv / rv)))
+          evalMonad(right).flatMap(rv =>
+            if rv == 0
+            then Raise("Division by zero.")
+            else Return(lv / rv)))
 
   // Exercise 4
-  def evalForYield(term: Term): M[Int] = ???
+  def evalForYield(term: Term): M[Int] =
+    term match
+      case Term.Cons(value) => Return(value)
+      case Term.Div(left, right) =>
+        val numbers = for
+          lv <- evalForYield(left)
+          rv <- evalForYield(right)
+        yield (lv, rv)
+        numbers.flatMap((lv, rv) =>
+          if rv == 0
+          then Raise("Division by zero.")
+          else Return(lv / rv))
+
 
 end ExceptionEvaluator
 
