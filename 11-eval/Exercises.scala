@@ -251,15 +251,44 @@ object OutputEvaluator:
     "eval(" + a.toString + ") <= " + v.toString + "\n"
 
   // Exercise 9
-  def eval (term: Term): M[Int] = ???
+  def eval (term: Term): M[Int] = term match
+    case Term.Cons(value) => M(line(term)(value), value)
+    case Term.Div(left, right) =>
+      eval(left).flatMap(lv =>
+        eval(right).flatMap(rv =>
+          if rv == 0
+          then throw new ArithmeticException("Division by zero.")
+          else {
+            val result = lv / rv
+            M(line(term)(result), result)
+          }
+        ))
 
   // Exercise 10
-  given mIsMonad: Monad[M] = ???
+  given mIsMonad: Monad[M] = new:
+    def unit[A] (a: => A): M[A] = M("", a)
+    extension[A] (ma: M[A])
+      override def flatMap[B](f: A => M[B]): M[B] = {
+        val mb = f(ma.a)
+        M(ma.o + mb.o, mb.a)
+      }
 
   // Exercise 11
   def out (o: Output): M[Unit] = M (o, ())
 
-  def evalMonad (term: Term): M[Int] = ???
+  def evalMonad (term: Term): M[Int] = term match {
+    case Term.Cons(value) => M(line(term)(value), value)
+    case Term.Div(left, right) =>
+      evalMonad(left).flatMap(lv => evalMonad(right).flatMap(rv =>
+        if rv == 0
+        then throw new ArithmeticException("Division by zero.")
+        else {
+          val result = lv/rv
+          val o = line(term)(result)
+          out(o).flatMap(_ => mIsMonad.unit[Int](result))
+        }
+      ))
+  }
 
   // Exercise 12
   def evalForYield (term: Term): M[Int] = ???
